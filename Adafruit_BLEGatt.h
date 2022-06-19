@@ -34,8 +34,7 @@
 */
 /**************************************************************************/
 
-#ifndef _ADAFRUIT_BLEGATT_H_
-#define _ADAFRUIT_BLEGATT_H_
+#pragma once
 
 #include <Arduino.h>
 #include "Adafruit_BLE.h"
@@ -61,26 +60,26 @@ class Adafruit_BLEGatt
 private:
   Adafruit_BLE& _ble;
 
-  uint8_t addChar_internal(uint8_t uuid[], uint8_t uuid_len, uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* description, const GattPresentationFormat* presentFormat);
+  uint8_t addChar_internal(const uint8_t uuid[], uint8_t uuid_len, uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* const description, const GattPresentationFormat* const presentFormat);
 
 public:
   char* buffer; // alias to ble's buffer
 
   Adafruit_BLEGatt(Adafruit_BLE& ble);
 
-  bool    clear(void);
+  bool clear(void);
 
   uint8_t addService(uint16_t uuid16);
   uint8_t addService(uint8_t uuid128[]);
 
-  uint8_t addCharacteristic(uint16_t uuid16  , uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* description = NULL, const GattPresentationFormat* presentFormat = NULL);
-  uint8_t addCharacteristic(uint8_t uuid128[], uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* description = NULL, const GattPresentationFormat* presentFormat = NULL);
+  uint8_t addCharacteristic(uint16_t uuid16, uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* const description = NULL, const GattPresentationFormat* const presentFormat = NULL);
+  uint8_t addCharacteristic(uint8_t uuid128[], uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* const description = NULL, const GattPresentationFormat* const presentFormat = NULL);
 
   //------------- Get Characteristic -------------//
-  uint8_t  getChar(uint8_t charID);
-  uint8_t  getChar(uint8_t charID, uint8_t* buf, uint8_t bufsize);
+  uint8_t getChar(uint8_t charID);
+  uint8_t getChar(uint8_t charID, uint8_t* buf, uint8_t bufsize);
 
-  uint8_t  getCharInt8(uint8_t charID)
+  uint8_t getCharInt8(uint8_t charID)
   {
     if ( this->getChar(charID) < sizeof(uint8_t) ) return 0;
     uint8_t result;
@@ -104,24 +103,26 @@ public:
     return result;
   }
 
-  char*    getCharStr(uint8_t charID)
+  const char* getCharStr(uint8_t charID)
   {
     if ( this->getChar(charID) == 0 ) return NULL;
     return this->buffer;
   }
 
   //------------- Set Characteristic -------------//
-  bool    setChar(uint8_t charID, uint8_t const data[], uint8_t size);
-  bool    setChar(uint8_t charID, char const *  str);
+  bool setChar(uint8_t charID, const uint8_t data[], uint8_t size);
+  bool setChar(uint8_t charID, const char* const str);
 
-  bool    setChar(uint8_t charID, uint8_t  data8 ) { return this->setChar(charID, (uint8_t*) &data8, 1); }
-  bool    setChar(uint8_t charID, int8_t   data8 ) { return this->setChar(charID, (uint8_t*) &data8, 1); }
+  bool Adafruit_BLEGatt::setChar(uint8_t charID, uint16_t datatype, uint32_t data);
 
-  bool    setChar(uint8_t charID, uint16_t data16) { return this->setChar(charID, (uint8_t*) &data16, 2); }
-  bool    setChar(uint8_t charID, int16_t  data16) { return this->setChar(charID, (uint8_t*) &data16, 2); }
+  bool setChar(uint8_t charID, uint8_t data8 ) { return this->setChar(charID, AT_ARGTYPE_UINT8, data8); }
+  bool setChar(uint8_t charID, int8_t  data8 ) { return this->setChar(charID, AT_ARGTYPE_INT8, data8); }
 
-  bool    setChar(uint8_t charID, uint32_t data32) { return this->setChar(charID, (uint8_t*) &data32, 4); }
-  bool    setChar(uint8_t charID, int32_t  data32) { return this->setChar(charID, (uint8_t*) &data32, 4); }
+  bool setChar(uint8_t charID, uint16_t data16) { return this->setChar(charID, AT_ARGTYPE_UINT16, data16); }
+  bool setChar(uint8_t charID, int16_t  data16) { return this->setChar(charID, AT_ARGTYPE_INT16, data16); }
+
+  bool setChar(uint8_t charID, uint32_t data32) { return this->setChar(charID, AT_ARGTYPE_UINT32, data32); }
+  bool setChar(uint8_t charID, int32_t  data32) { return this->setChar(charID, AT_ARGTYPE_INT32, data32); }
 };
 
 enum
@@ -268,5 +269,3 @@ enum
   GATT_PRESENT_UNIT_CONCENTRATION_COUNT_PER_CUBIC_METRE                    = 0x27B5,
   GATT_PRESENT_UNIT_IRRADIANCE_WATT_PER_SQUARE_METRE                       = 0x27B6
 };
-
-#endif /* _ADAFRUIT_BLEGATT_H_ */

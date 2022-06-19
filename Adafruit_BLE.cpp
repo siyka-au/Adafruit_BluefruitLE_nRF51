@@ -66,11 +66,11 @@ Adafruit_BLE::Adafruit_BLE(void)
 
   _reset_started_timestamp = 0;
 
-  _disconnect_callback  = NULL;
-  _connect_callback     = NULL;
-  _ble_uart_rx_callback = NULL;
-  _ble_midi_rx_callback = NULL;
-  _ble_gatt_rx_callback = NULL;
+  _connection_listener     = NULL;
+  _disconnection_listener  = NULL;
+  _ble_uart_rx_callback    = NULL;
+  _ble_midi_rx_callback    = NULL;
+  _ble_gatt_rx_listener    = NULL;
 }
 
 /******************************************************************************/
@@ -315,8 +315,8 @@ void Adafruit_BLE::update(uint32_t period_ms)
     //--------------------------------------------------------------------+
     // System Event
     //--------------------------------------------------------------------+
-    if ( this->_connect_callback    && bitRead(system_event, EVENT_SYSTEM_CONNECT   ) ) this->_connect_callback();
-    if ( this->_disconnect_callback && bitRead(system_event, EVENT_SYSTEM_DISCONNECT) ) this->_disconnect_callback();
+    if ( this->_connection_listener    && bitRead(system_event, EVENT_SYSTEM_CONNECT   ) ) this->_connection_listener->onBLEConnect();
+    if ( this->_disconnection_listener && bitRead(system_event, EVENT_SYSTEM_DISCONNECT) ) this->_disconnection_listener->onBLEDisconnect();
 
     if ( this->_ble_uart_rx_callback && bitRead(system_event, EVENT_SYSTEM_BLE_UART_RX) )
     {
@@ -352,7 +352,7 @@ void Adafruit_BLE::update(uint32_t period_ms)
     //--------------------------------------------------------------------+
     // Gatt Event
     //--------------------------------------------------------------------+
-    if ( this->_ble_gatt_rx_callback && gatts_event )
+    if ( this->_ble_gatt_rx_listener && gatts_event )
     {
 //      _verbose = true;
       for(uint8_t charid=1; charid < 30; charid++)
@@ -365,7 +365,7 @@ void Adafruit_BLE::update(uint32_t period_ms)
           uint16_t len = readraw(); // readraw swallow OK/ERROR already
           memcpy(tempbuf, this->buffer, len);
 
-          this->_ble_gatt_rx_callback(charid, tempbuf, len);
+          this->_ble_gatt_rx_listener->onBLEGattRx(charid, tempbuf, len);
         }
       }
     }
@@ -414,7 +414,7 @@ bool Adafruit_BLE::writeNVM(uint16_t offset, uint8_t const data[], uint16_t size
     @param offset relative offset in the NVM section
 */
 /******************************************************************************/
-bool Adafruit_BLE::writeNVM(uint16_t offset, char const* str)
+bool Adafruit_BLE::writeNVM(uint16_t offset, char const* const str)
 {
   VERIFY_(offset + strlen(str) <= NVM_USERDATA_SIZE );
 
@@ -483,7 +483,7 @@ bool Adafruit_BLE::readNVM(uint16_t offset, uint8_t data[], uint16_t size)
     @param
 */
 /******************************************************************************/
-bool Adafruit_BLE::readNVM(uint16_t offset, char* str, uint16_t size)
+bool Adafruit_BLE::readNVM(uint16_t offset, char* const str, uint16_t size)
 {
   VERIFY_(offset < NVM_USERDATA_SIZE);
 
@@ -558,10 +558,10 @@ int  Adafruit_BLE::readBLEUart(uint8_t* buffer, int size)
     @param[in] fp function pointer, NULL will discard callback
 */
 /******************************************************************************/
-void Adafruit_BLE::setConnectCallback( void (*fp) (void) )
+void Adafruit_BLE::setConnectionListener(IAdafruit_BLEConnectionListener* const listener)
 {
-  this->_connect_callback = fp;
-  install_callback(fp != NULL, EVENT_SYSTEM_CONNECT, -1);
+  this->_connection_listener = listener;
+  install_callback(listener != NULL, EVENT_SYSTEM_CONNECT, -1);
 }
 
 /******************************************************************************/
@@ -571,10 +571,10 @@ void Adafruit_BLE::setConnectCallback( void (*fp) (void) )
     @param[in] fp function pointer, NULL will discard callback
 */
 /******************************************************************************/
-void Adafruit_BLE::setDisconnectCallback( void (*fp) (void) )
+void Adafruit_BLE::setDisconnectionListener(IAdafruit_BLEDisconnectionListener* const listener)
 {
-  this->_disconnect_callback = fp;
-  install_callback(fp != NULL, EVENT_SYSTEM_DISCONNECT, -1);
+  this->_disconnection_listener = listener;
+  install_callback(listener != NULL, EVENT_SYSTEM_DISCONNECT, -1);
 }
 
 /******************************************************************************/
@@ -605,16 +605,15 @@ void Adafruit_BLE::setBleMidiRxCallback( midiRxCallback_t fp )
 
 /******************************************************************************/
 /*!
-    @brief  Set handle for BLE Gatt Rx callback
+    @brief  Set listener for BLE Gatt Rx callback
 
     @param[in] fp function pointer, NULL will discard callback
 */
 /******************************************************************************/
-void Adafruit_BLE::setBleGattRxCallback(int32_t chars_idx,  void (*fp) (int32_t, uint8_t[], uint16_t) )
+void Adafruit_BLE::setBleGattRxListener(int32_t chars_idx, IAdafruit_BLEGattRxListener* const listener)
 {
   if ( chars_idx == 0) return;
 
-  this->_ble_gatt_rx_callback = fp;
-  install_callback(fp != NULL, -1, chars_idx-1);
+  this->_ble_gatt_rx_listener = listener;
+  install_callback(listener != NULL, -1, chars_idx-1);
 }
-

@@ -34,8 +34,7 @@
 */
 /**************************************************************************/
 
-#ifndef _Adafruit_BLE_H_
-#define _Adafruit_BLE_H_
+#pragma once
 
 #include <stdint.h>
 #include <Arduino.h>
@@ -43,8 +42,9 @@
 #include "utility/errors.h"
 #include "utility/TimeoutTimer.h"
 #include "Adafruit_ATParser.h"
+#include "Adafruit_BLECallbacks.h"
 
-#define BLE_DEFAULT_TIMEOUT      250
+constexpr auto BLE_DEFAULT_TIMEOUT = 250;
 
 enum BLEDataType_t
 {
@@ -53,7 +53,6 @@ enum BLEDataType_t
   BLE_DATATYPE_BYTEARRAY,
   BLE_DATATYPE_INTEGER,
 };
-
 
 class Adafruit_BLE : public Adafruit_ATParser
 {
@@ -92,12 +91,12 @@ class Adafruit_BLE : public Adafruit_ATParser
 
     bool setAdvData(uint8_t advdata[], uint8_t size);
 
-    bool writeNVM(uint16_t offset, uint8_t const  data[], uint16_t size);
-    bool writeNVM(uint16_t offset, char    const* str);
+    bool writeNVM(uint16_t offset, const uint8_t data[], uint16_t size);
+    bool writeNVM(uint16_t offset, const char* const str);
     bool writeNVM(uint16_t offset, int32_t number);
 
     bool readNVM(uint16_t offset, uint8_t data[], uint16_t size);
-    bool readNVM(uint16_t offset, char  * str   , uint16_t size);
+    bool readNVM(uint16_t offset, char* const str, uint16_t size);
     bool readNVM(uint16_t offset, int32_t* number);
 
     // helper with bleuart
@@ -132,24 +131,23 @@ class Adafruit_BLE : public Adafruit_ATParser
       this->update(0);
     }
 
-    void setDisconnectCallback( void (*fp) (void) );
-    void setConnectCallback   ( void (*fp) (void) );
+    void setConnectionListener(IAdafruit_BLEConnectionListener* const listener);
+    void setDisconnectionListener(IAdafruit_BLEDisconnectionListener* const listener);
+    void setBleGattRxListener(int32_t chars_idx, IAdafruit_BLEGattRxListener* const listener);
 
     void setBleUartRxCallback( void (*fp) (char data[], uint16_t len) );
     void setBleMidiRxCallback( midiRxCallback_t fp );
-    void setBleGattRxCallback( int32_t chars_idx, void (*fp) (int32_t, uint8_t[], uint16_t) );
 
   protected:
     // helper
     void install_callback(bool enable, int8_t system_id, int8_t gatts_id);
 
-    void (*_disconnect_callback) (void);
-    void (*_connect_callback) (void);
+    IAdafruit_BLEConnectionListener* _connection_listener;
+    IAdafruit_BLEDisconnectionListener* _disconnection_listener;
+    IAdafruit_BLEGattRxListener* _ble_gatt_rx_listener;
 
     void (*_ble_uart_rx_callback) (char data[], uint16_t len);
     midiRxCallback_t _ble_midi_rx_callback;
-
-    void (*_ble_gatt_rx_callback) (int32_t chars_id, uint8_t data[], uint16_t len);
 };
 
 //--------------------------------------------------------------------+
@@ -172,5 +170,3 @@ class Adafruit_BLE : public Adafruit_ATParser
       Serial.print("\r\n");\
     }while(0)
 #endif
-
-#endif /* _Adafruit_BLE_H_ */

@@ -90,7 +90,7 @@ uint8_t Adafruit_BLEGatt::addService(uint8_t uuid128[])
     @return Chars ID (starting from 1). If failed 0 is returned
 */
 /******************************************************************************/
-uint8_t Adafruit_BLEGatt::addChar_internal(uint8_t uuid[], uint8_t uuid_len, uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* description, const GattPresentationFormat* presentFormat)
+uint8_t Adafruit_BLEGatt::addChar_internal(const uint8_t uuid[], uint8_t uuid_len, uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* const description, const GattPresentationFormat* const presentFormat)
 {
   bool isOK;
   int32_t chars_id;
@@ -162,7 +162,7 @@ uint8_t Adafruit_BLEGatt::addChar_internal(uint8_t uuid[], uint8_t uuid_len, uin
     @return Chars ID (starting from 1). If failed 0 is returned
 */
 /******************************************************************************/
-uint8_t Adafruit_BLEGatt::addCharacteristic(uint16_t uuid16, uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* description, const GattPresentationFormat* presentFormat)
+uint8_t Adafruit_BLEGatt::addCharacteristic(uint16_t uuid16, uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* const description, const GattPresentationFormat* const presentFormat)
 {
   return addChar_internal((uint8_t*) &uuid16, 2, properties, min_len, max_len, datatype, description, presentFormat);
 }
@@ -174,9 +174,23 @@ uint8_t Adafruit_BLEGatt::addCharacteristic(uint16_t uuid16, uint8_t properties,
     @return Chars ID (starting from 1). If failed 0 is returned
 */
 /******************************************************************************/
-uint8_t Adafruit_BLEGatt::addCharacteristic(uint8_t uuid128[], uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* description, const GattPresentationFormat* presentFormat)
+uint8_t Adafruit_BLEGatt::addCharacteristic(uint8_t uuid128[], uint8_t properties, uint8_t min_len, uint8_t max_len, BLEDataType_t datatype, const char* const description, const GattPresentationFormat* const presentFormat)
 {
   return addChar_internal(uuid128, 16, properties, min_len, max_len, datatype, description, presentFormat);
+}
+
+/******************************************************************************/
+/*!
+    @brief Set Characteristics value with integer
+    @param
+*/
+/******************************************************************************/
+bool Adafruit_BLEGatt::setChar(uint8_t charID, uint16_t datatype, uint32_t data)
+{
+  uint16_t argtype[] = { AT_ARGTYPE_UINT8, datatype };
+  uint32_t args[] = { charID, data };
+
+  return _ble.atcommand_full(F("AT+GATTCHAR"), NULL, 2, argtype, args);
 }
 
 /******************************************************************************/
@@ -185,7 +199,7 @@ uint8_t Adafruit_BLEGatt::addCharacteristic(uint8_t uuid128[], uint8_t propertie
     @param
 */
 /******************************************************************************/
-bool Adafruit_BLEGatt::setChar(uint8_t charID, uint8_t const data[], uint8_t size)
+bool Adafruit_BLEGatt::setChar(uint8_t charID, const uint8_t data[], uint8_t size)
 {
   uint16_t argtype[] = { AT_ARGTYPE_UINT8, (uint16_t) (AT_ARGTYPE_BYTEARRAY+ size) };
   uint32_t args[] = { charID, (uint32_t) data };
@@ -199,7 +213,7 @@ bool Adafruit_BLEGatt::setChar(uint8_t charID, uint8_t const data[], uint8_t siz
     @param
 */
 /******************************************************************************/
-bool Adafruit_BLEGatt::setChar(uint8_t charID, char const* str)
+bool Adafruit_BLEGatt::setChar(uint8_t charID, const char* const str)
 {
   uint16_t argtype[] = { AT_ARGTYPE_UINT8, AT_ARGTYPE_STRING };
   uint32_t args[] = { charID, (uint32_t) str };
